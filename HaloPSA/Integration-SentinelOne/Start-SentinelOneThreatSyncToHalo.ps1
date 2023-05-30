@@ -172,7 +172,7 @@ foreach ($threat in $threats) {
     $date_time_string_german = $threat.threatInfo.createdAt.ToString($DATE_FORMAT_STRING)
 
     $report_string = "<b>New S1 threat from $($date_time_string_german)</b>" + [System.Environment]::NewLine
-    $report_string += "<a href=""https://euce1-infinigate.sentinelone.net/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show in SentinelOne console</a>" + [System.Environment]::NewLine 
+    $report_string += "<a href=""$S1_BASE_URL/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show in SentinelOne console</a>" + [System.Environment]::NewLine 
     $report_string += [System.Environment]::NewLine 
     $report_string += "-- FILE INFORMATION" + [System.Environment]::NewLine 
     $report_string += "Filename: $($threat.threatInfo.threatName) " + [System.Environment]::NewLine    
@@ -196,7 +196,8 @@ foreach ($threat in $threats) {
     $report_string += "-- HALO INFORMATION" + [System.Environment]::NewLine 
     $report_string += "Asset Inventory Number: $($halo_asset.inventory_number)" + [System.Environment]::NewLine 
 
-    $updated_existing_ticket = $false 
+    $updated_existing_ticket = $false
+    # Check if we have a matching Halo asset. Only then we can update existing tickets and link existing threat IDs to the ticket
     if ($null -ne $halo_asset) {
         # Matching Halo asset has been found
         $existing_tickets = Get-HaloTicket -RequestTypeID $HALO_TICKET_TYPE_ID -FullObjects -OpenOnly -AssetID $halo_asset.id
@@ -361,7 +362,7 @@ foreach ($existing_ticket in $existing_tickets) {
 
         # Build the URL to view all linked threats
         $ticket_id = $existing_ticket.id
-        $all_linked_threats_url = "https://euce1-infinigate.sentinelone.net/incidents/threats?filter={%22externalTicketId__contains%22:%22\%22$ticket_id\%22%22,%22timeTitle%22:%22Last%20Year%22}"
+        $all_linked_threats_url = "https://$S1_BASE_URL/incidents/threats?filter={%22externalTicketId__contains%22:%22\%22$ticket_id\%22%22,%22timeTitle%22:%22Last%20Year%22}"
         if ($null -ne $threat) {
             # Found a threat that is resolved for a ticket that is still open
             Write-Host "SentinelOne threat $threat_id has been resolved, therefor posting update to ticket $($existing_ticket.id)"
@@ -372,7 +373,7 @@ foreach ($existing_ticket in $existing_tickets) {
 
             # Post note ticket
             $note_text = "<b>A linked SentinelOne threat has been marked as resolved</b><br>" 
-            $note_text += "<a href=""https://euce1-infinigate.sentinelone.net/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show resolved threat in SentinelOne console</a><br>"
+            $note_text += "<a href=""https://$S1_BASE_URL/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show resolved threat in SentinelOne console</a><br>"
             $note_text += "<a href=""$all_linked_threats_url"">Show all linked threats in SentinelOne console</a><br>"
             $note_text += "Hint: Check the field <i>SentinelOne Unresolved Threat IDs</i> to see if any theats are remaining<br>"
             $note_text += "-- INFO:<br>" 
