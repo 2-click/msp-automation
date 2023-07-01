@@ -91,7 +91,8 @@ function Invoke-S1WebRequest ($resource_uri, $method, $body) {
 
     try {
         $obj = $($request.content | ConvertFrom-Json).data
-    } catch {
+    }
+    catch {
         Write-Error "SentinelOne API did not return any good data"
         $obj = $null
     }
@@ -103,7 +104,7 @@ function Set-S1ThreatExternalTicketId ($threat_id, $external_id) {
         filter = @{
             ids = "$threat_id"
         }
-        data = @{
+        data   = @{
             externalTicketId = "$external_id"
         }
     }
@@ -119,7 +120,8 @@ function Set-S1ThreatExternalTicketId ($threat_id, $external_id) {
 # Connect to Halo
 try {
     Connect-HaloAPI -URL $HaloURL -ClientId $HaloClientID -ClientSecret $HaloClientSecret -Scopes "all"
-} catch {
+}
+catch {
     Write-Error "Error connecting to the HaloPSA API"
     exit 1
 }
@@ -147,17 +149,20 @@ foreach ($threat in $threats) {
         # Received multiple assets from halo
         # We cannot use Where-Object in a clean one-liner because of the way Halo handles (custom)fields
         foreach ($asset in $halo_assets) {
-            $halo_hostname = $($asset.fields | Where-Object -FilterScript {$_.name -eq "Hostname"}).Value
+            $halo_hostname = $($asset.fields | Where-Object -FilterScript { $_.name -eq "Hostname" }).Value
             if ($halo_hostname -eq $s1_endpoint.computerName) {
-                # Current asset's name matches the name of the S1 endpoint, assign halo_asset
-                $halo_asset = $asset
-                break # We found the asset so we can break the loop
+                # Current asset's name matches the name of the S1 endpoint
+                if ($s1_endpoint.siteName -eq $asset.client_name) {
+                    # Client of asset is the same as the client in SentinelOne, assign halo_asset
+                    $halo_asset = $asset
+                    break # We found the asset so we can break the loop
+                }
             }
         }
         
         
     }
-    if ($halo_assets.count -eq 1)  {
+    if ($halo_assets.count -eq 1) {
         # Received exactly one asset from halo
         # Assign halo_asset
         $halo_asset = $halo_assets
@@ -203,16 +208,16 @@ foreach ($threat in $threats) {
         $existing_tickets = Get-HaloTicket -RequestTypeID $HALO_TICKET_TYPE_ID -FullObjects -OpenOnly -AssetID $halo_asset.id
         foreach ($existing_ticket in $existing_tickets) {
             # Load hash from ticket
-            $file_hash = $($existing_ticket.customfields | Where-Object -FilterScript {$_.Name -eq "CFSentinelOneThreatFileHash"}).Value
+            $file_hash = $($existing_ticket.customfields | Where-Object -FilterScript { $_.Name -eq "CFSentinelOneThreatFileHash" }).Value
             if ($file_hash -eq $threat.threatInfo.sha1) {
                 # Existing ticket has been found
                 Write-Host "Adding threat to existing ticket as note" -ForegroundColor Yellow
                 # Prepare action
                 $halo_action = @{
-                    ticket_id = $existing_ticket.id
-                    outcome = $HALO_ACTION_NAME_INTEGRATION_UPDATE
-                    datetime = [DateTime]::Now
-                    note = $report_string
+                    ticket_id      = $existing_ticket.id
+                    outcome        = $HALO_ACTION_NAME_INTEGRATION_UPDATE
+                    datetime       = [DateTime]::Now
+                    note           = $report_string
                     hiddenfromuser = $true
                 }
                 # Post action to ticket
@@ -221,7 +226,7 @@ foreach ($threat in $threats) {
                 # Get existing threat IDs from ticket and add the current threat id to it
                 $threat_ids_string = $null
                 $threat_ids = $null
-                $threat_ids_string = $($existing_ticket.customfields | Where-Object -FilterScript {$_.Name -eq "CFSentinelOneThreatIds"}).Value
+                $threat_ids_string = $($existing_ticket.customfields | Where-Object -FilterScript { $_.Name -eq "CFSentinelOneThreatIds" }).Value
                 $threat_ids = $threat_ids_string.split(",")
                 $threat_ids += $threat.threatInfo.threatId
                 $threat_ids_string = $threat_ids -join ","
@@ -229,21 +234,21 @@ foreach ($threat in $threats) {
                 # Get existing unresolved threat IDs from ticket and add the current threat id to it
                 $unresolved_threat_ids_string = $null
                 $unresolved_threat_ids = $null
-                $unresolved_threat_ids_string = $($existing_ticket.customfields | Where-Object -FilterScript {$_.Name -eq "CFSentinelOneUnresolvedThreatIds"}).Value
+                $unresolved_threat_ids_string = $($existing_ticket.customfields | Where-Object -FilterScript { $_.Name -eq "CFSentinelOneUnresolvedThreatIds" }).Value
                 $unresolved_threat_ids = $unresolved_threat_ids_string.split(",")
                 $unresolved_threat_ids += $threat.threatInfo.threatId
                 $unresolved_threat_ids_string = $unresolved_threat_ids -join ","
 
                 #Write all threat IDs to the custom field, comma seperated
                 $halo_ticket = @{
-                    id = $existing_ticket.id
+                    id           = $existing_ticket.id
                     customfields = @(
                         @{
-                            id = $HALO_CF_THREAT_IDS
+                            id    = $HALO_CF_THREAT_IDS
                             value = "$threat_ids_string"
                         },
                         @{
-                            id = $HALO_CF_UNRESOLVED_THREAT_IDS
+                            id    = $HALO_CF_UNRESOLVED_THREAT_IDS
                             value = "$unresolved_threat_ids_string"
                         }
                     )
@@ -265,50 +270,51 @@ foreach ($threat in $threats) {
         if ($null -ne $halo_asset) {
             # There is a matching Halo Asset
             $halo_ticket = @{
-                summary = "SentinelOne threat: $($threat.threatInfo.threatName) - $($s1_endpoint.computerName)"
-                details = $report_string.Replace([System.Environment]::NewLine, "<br>")
-                site_id = $halo_asset.site_id
+                summary       = "SentinelOne threat: $($threat.threatInfo.threatName) - $($s1_endpoint.computerName)"
+                details       = $report_string.Replace([System.Environment]::NewLine, "<br>")
+                site_id       = $halo_asset.site_id
                 tickettype_id = $HALO_TICKET_TYPE_ID
-                datetime = [DateTime]::Now
-                assets = @(
+                datetime      = [DateTime]::Now
+                assets        = @(
                     @{
-                      id = $halo_asset.id
+                        id = $halo_asset.id
                     }
                 )
-                customfields = @(
+                customfields  = @(
                     @{
-                        id = $HALO_CF_THREAT_FILEHASH
+                        id    = $HALO_CF_THREAT_FILEHASH
                         value = "$($threat.threatInfo.sha1)"
                     },
                     @{
-                        id = $HALO_CF_THREAT_IDS
+                        id    = $HALO_CF_THREAT_IDS
                         value = "$($threat.threatInfo.threatid)"
                     },
                     @{
-                        id = $HALO_CF_UNRESOLVED_THREAT_IDS
+                        id    = $HALO_CF_UNRESOLVED_THREAT_IDS
                         value = "$($threat.threatInfo.threatid)"
                     }
                 )
             }
-        } else {
+        }
+        else {
             # There is no matching Halo Asset
             $halo_ticket = @{
-                summary = "SentinelOne threat: $($threat.threatInfo.threatName) - $($s1_endpoint.computerName)"
-                details = $report_string.Replace([System.Environment]::NewLine, "<br>")
-                site_id = $HALO_FALLBACK_SITE_ID
+                summary       = "SentinelOne threat: $($threat.threatInfo.threatName) - $($s1_endpoint.computerName)"
+                details       = $report_string.Replace([System.Environment]::NewLine, "<br>")
+                site_id       = $HALO_FALLBACK_SITE_ID
                 tickettype_id = $HALO_TICKET_TYPE_ID
-                datetime = [DateTime]::Now
-                customfields = @(
+                datetime      = [DateTime]::Now
+                customfields  = @(
                     @{
-                        id = $HALO_CF_THREAT_FILEHASH
+                        id    = $HALO_CF_THREAT_FILEHASH
                         value = "$($threat.threatInfo.sha1)"
                     },
                     @{
-                        id = $HALO_CF_THREAT_IDS
+                        id    = $HALO_CF_THREAT_IDS
                         value = "$($threat.threatInfo.threatid)"
                     },
                     @{
-                        id = $HALO_CF_UNRESOLVED_THREAT_IDS
+                        id    = $HALO_CF_UNRESOLVED_THREAT_IDS
                         value = "$($threat.threatInfo.threatid)"
                     }
                 )
@@ -339,17 +345,17 @@ $existing_tickets = Get-HaloTicket -RequestTypeID $HALO_TICKET_TYPE_ID -FullObje
 Write-Host "Found $($existing_tickets.Count) tickets"
 
 foreach ($existing_ticket in $existing_tickets) {
-    $threat_hash = $($existing_ticket.customfields | Where-Object -FilterScript {$_.Name -eq "CFSentinelOneThreatFileHash"}).Value
+    $threat_hash = $($existing_ticket.customfields | Where-Object -FilterScript { $_.Name -eq "CFSentinelOneThreatFileHash" }).Value
     $threat_ids_string = $null
     $unresolved_threat_ids_string = $null
-    $threat_ids_string = $($existing_ticket.customfields | Where-Object -FilterScript {$_.Name -eq "CFSentinelOneThreatIds"}).Value
+    $threat_ids_string = $($existing_ticket.customfields | Where-Object -FilterScript { $_.Name -eq "CFSentinelOneThreatIds" }).Value
     if ($null -eq $threat_ids_string -or $threat_ids_string.Length -lt 1) {
         # No threat IDs found in custom field
         continue
     }
     $threat_ids = $threat_ids_string.split(",")
 
-    $unresolved_threat_ids_string = $($existing_ticket.customfields | Where-Object -FilterScript {$_.Name -eq "CFSentinelOneUnresolvedThreatIds"}).Value
+    $unresolved_threat_ids_string = $($existing_ticket.customfields | Where-Object -FilterScript { $_.Name -eq "CFSentinelOneUnresolvedThreatIds" }).Value
     if ($null -eq $unresolved_threat_ids_string -or $unresolved_threat_ids_string.Length -lt 1) {
         # No unresolved threat IDs found in custom field
         continue
@@ -368,7 +374,7 @@ foreach ($existing_ticket in $existing_tickets) {
             Write-Host "SentinelOne threat $threat_id has been resolved, therefor posting update to ticket $($existing_ticket.id)"
             # Get storyline to find out who marked the threat has resolved
             $storyline = Invoke-S1WebRequest -method "Get" -resource_uri "/web/api/v2.1/threats/$threat_id/timeline"
-            $relevant_story_entries = $storyline | Where-Object -FilterScript {$_.primaryDescription -like "*changed the analyst verdict*" -or $_.primaryDescription -like "*changed the incident status*"}
+            $relevant_story_entries = $storyline | Where-Object -FilterScript { $_.primaryDescription -like "*changed the analyst verdict*" -or $_.primaryDescription -like "*changed the incident status*" }
             $relevant_story_entries = $relevant_story_entries | Sort-Object -Property createdAt
 
             # Post note ticket
@@ -386,10 +392,10 @@ foreach ($existing_ticket in $existing_tickets) {
             }
             # Prepare action
             $halo_action = @{
-                ticket_id = $existing_ticket.id
-                outcome = $HALO_ACTION_NAME_INTEGRATION_UPDATE
-                datetime = [DateTime]::Now
-                note = $note_text
+                ticket_id      = $existing_ticket.id
+                outcome        = $HALO_ACTION_NAME_INTEGRATION_UPDATE
+                datetime       = [DateTime]::Now
+                note           = $note_text
                 hiddenfromuser = $true
             }
             # Post action to ticket
@@ -400,10 +406,10 @@ foreach ($existing_ticket in $existing_tickets) {
             $unresolved_threat_ids_string = $unresolved_threat_ids -join "," 
             #Write all threat IDs to the custom field, comma seperated
             $halo_ticket = @{
-                id = $existing_ticket.id
+                id           = $existing_ticket.id
                 customfields = @(
                     @{
-                        id = $HALO_CF_UNRESOLVED_THREAT_IDS
+                        id    = $HALO_CF_UNRESOLVED_THREAT_IDS
                         value = "$unresolved_threat_ids_string"
                     }
                 )
@@ -432,21 +438,22 @@ foreach ($threat in $threats) {
         $note_text += "<a href=""https://euce1-infinigate.sentinelone.net/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show in SentinelOne console</a>" + [System.Environment]::NewLine 
         # Prepare action
         $halo_action = @{
-            ticket_id = $ticket_id
-            outcome_id = $HALO_ACTION_ID_REOPEN
-            datetime = [DateTime]::Now
-            note = $note_text
-            sendemail = $false
-            new_status = $HALO_STATUS_AFTER_REOPEN
+            ticket_id      = $ticket_id
+            outcome_id     = $HALO_ACTION_ID_REOPEN
+            datetime       = [DateTime]::Now
+            note           = $note_text
+            sendemail      = $false
+            new_status     = $HALO_STATUS_AFTER_REOPEN
             hiddenfromuser = $false
         }
         # Post action to ticket
         $note = New-HaloAction -Action $halo_action
 
-        $unresolved_threat_ids_string = $($ticket.customfields | Where-Object -FilterScript {$_.Name -eq "CFSentinelOneUnresolvedThreatIds"}).Value
+        $unresolved_threat_ids_string = $($ticket.customfields | Where-Object -FilterScript { $_.Name -eq "CFSentinelOneUnresolvedThreatIds" }).Value
         if ($null -eq $unresolved_threat_ids_string -or $unresolved_threat_ids_string.Length -lt 1) {
             # No unresolved threat IDs found in custom field
-        } else {
+        }
+        else {
             $unresolved_threat_ids = $unresolved_threat_ids_string.split(",")
         }
 
@@ -455,10 +462,10 @@ foreach ($threat in $threats) {
         $unresolved_threat_ids_string = $unresolved_threat_ids -join "," 
         #Write all threat IDs to the custom field, comma seperated
         $halo_ticket = @{
-            id = $ticket.id
+            id           = $ticket.id
             customfields = @(
                 @{
-                    id = $HALO_CF_UNRESOLVED_THREAT_IDS
+                    id    = $HALO_CF_UNRESOLVED_THREAT_IDS
                     value = "$unresolved_threat_ids_string"
                 }
             )
