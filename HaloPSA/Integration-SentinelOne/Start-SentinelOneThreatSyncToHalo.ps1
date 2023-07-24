@@ -361,14 +361,14 @@ foreach ($existing_ticket in $existing_tickets) {
         continue
     }
     $unresolved_threat_ids = $unresolved_threat_ids_string.split(",")
-    foreach ($threat_id in $threat_ids) {
+    foreach ($threat_id in $unresolved_threat_ids) {
         # Get SentinelOne threat that has the correct ID and is already resolved
         $threat = Invoke-S1WebRequest -method "Get" -resource_uri "/web/api/v2.1/threats?incidentStatuses=resolved&ids=$threat_id"
         $s1_endpoint = Invoke-S1WebRequest -method "Get" -resource_uri "/web/api/v2.1/agents?uuids=$($threat.agentDetectionInfo.agentUuid)" 
 
         # Build the URL to view all linked threats
         $ticket_id = $existing_ticket.id
-        $all_linked_threats_url = "https://$S1_BASE_URL/incidents/threats?filter={%22externalTicketId__contains%22:%22\%22$ticket_id\%22%22,%22timeTitle%22:%22Last%20Year%22}"
+        $all_linked_threats_url = "$S1_BASE_URL/incidents/threats?filter={%22externalTicketId__contains%22:%22\%22$ticket_id\%22%22,%22timeTitle%22:%22Last%20Year%22}"
         if ($null -ne $threat) {
             # Found a threat that is resolved for a ticket that is still open
             Write-Host "SentinelOne threat $threat_id has been resolved, therefor posting update to ticket $($existing_ticket.id)"
@@ -379,7 +379,7 @@ foreach ($existing_ticket in $existing_tickets) {
 
             # Post note ticket
             $note_text = "<b>A linked SentinelOne threat has been marked as resolved</b><br>" 
-            $note_text += "<a href=""https://$S1_BASE_URL/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show resolved threat in SentinelOne console</a><br>"
+            $note_text += "<a href=""$S1_BASE_URL/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show resolved threat in SentinelOne console</a><br>"
             $note_text += "<a href=""$all_linked_threats_url"">Show all linked threats in SentinelOne console</a><br>"
             $note_text += "Hint: Check the field <i>SentinelOne Unresolved Threat IDs</i> to see if any theats are remaining<br>"
             $note_text += "-- INFO:<br>" 
@@ -416,6 +416,7 @@ foreach ($existing_ticket in $existing_tickets) {
             }
             $null = Set-HaloTicket -Ticket $halo_ticket
 
+            
         }
     }
 }
@@ -435,7 +436,7 @@ foreach ($threat in $threats) {
         # Closed ticket has been found in Halo
         Write-Host "Ticket $ticket_id is closed, but a threat refering that ticket is not resolved yet, reopening the ticket..."
         $note_text = "<b>A linked SentinelOne threat hasn't been resolved yet, therefor re-opening the ticket.</b><br>"
-        $note_text += "<a href=""https://euce1-infinigate.sentinelone.net/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show in SentinelOne console</a>" + [System.Environment]::NewLine 
+        $note_text += "<a href=""$S1_BASE_URL/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show in SentinelOne console</a>" + [System.Environment]::NewLine 
         # Prepare action
         $halo_action = @{
             ticket_id      = $ticket_id
@@ -456,6 +457,8 @@ foreach ($threat in $threats) {
         else {
             $unresolved_threat_ids = $unresolved_threat_ids_string.split(",")
         }
+
+        # Todo: Check if threat ID already exists in this field
 
         # Add threat ID to Ticket CF SentinelOneUnresolvedThreadIds
         $unresolved_threat_ids += $threat.threatInfo.threatId
