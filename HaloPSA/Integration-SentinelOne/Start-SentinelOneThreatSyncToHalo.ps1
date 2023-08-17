@@ -336,12 +336,13 @@ foreach ($threat in $threats) {
 # This method could become a problem once there are a lot of tickets with the specified ticket type as we get both open tickets and closed tickets.
 # We do this because we want to put updates in tickets that are closed as well in order to remove the threat id from the unresolved threat IDs fields
 # We could add -openonly to the Get-HaloTicket command to reduce time spend, but then the custom field won't get updated for closed tickets.
-# That would mean that a technican has to wait for the script to run before they can close the Ticket.
-# Possible workarounds: Only get tickets of the last 3 months or only get a specified number of tickets
+# Current workarounds: Only get tickets of the last 2 months
+
+
 
 Write-Host "Retrieving tickets from HaloPSA to put notes in tickets when it is required"
 $existing_tickets = $null
-$existing_tickets = Get-HaloTicket -RequestTypeID $HALO_TICKET_TYPE_ID -FullObjects
+$existing_tickets = Get-HaloTicket -RequestTypeID $HALO_TICKET_TYPE_ID -FullObjects -StartDate $((Get-Date).AddMonths(-2))
 Write-Host "Found $($existing_tickets.Count) tickets"
 
 foreach ($existing_ticket in $existing_tickets) {
