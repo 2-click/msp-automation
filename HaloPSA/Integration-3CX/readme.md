@@ -8,8 +8,8 @@ No settings in HaloPSA are needed. You do need a readonly SQL account though and
 ## Settings in 3CX
 1. Go to Settings -> CRM -> New -> Database MSSSQL
 2. Specify database credentials. Halo uses a special port so you need to specify that in the "server"-field. Example: yournicedatabasehost.haloitsm.com,7001
-3. Use the SQL statement from the file "3cx_phone_lookup" for the field "Lookup By Number SQL Statement"
-4. Use the SQL statement from the file "3cx_search_contacts" for the field "Search Contacts SQL Statement"
+3. Use the SQL statement from the file "3cx_phone_lookup" for the field "Lookup By Number SQL Statement". Replace +49 with your country code.
+4. Use the SQL statement from the file "3cx_search_contacts" for the field "Search Contacts SQL Statement". Replace +49 with your country code.
 5. Use this URL for the field "Contact URL prefix": https://yourhaloinstancefqdn/customers?mainview=user&hidegeneral=false&hideagents=false&hidedefaultsite=false&userid=
 6. Leave all other fields empty
 7. Click save
