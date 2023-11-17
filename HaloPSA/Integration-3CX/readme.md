@@ -17,3 +17,8 @@ No settings in HaloPSA are needed. You do need a readonly SQL account though and
 ## Now what?
 When a customer calls with a number that is assigned to a user in HaloPSA, 3CX will display their name and company. It will also provide a button to open the contact in HaloPSA.
 
+## Caveats
+Watch out if you modify the SQL. It appears that 3CX has a limit on how long those queries can be. 
+
+## Further reading
+If you need more info or you are a curoius person, check out 3CX official guide for databse CRM integrations: https://www.3cx.com/docs/sql-database-pbx-integration/
