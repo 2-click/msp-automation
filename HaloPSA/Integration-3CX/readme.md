@@ -21,5 +21,5 @@ When a customer calls with a number that is assigned to a user in HaloPSA, 3CX w
 Watch out if you modify the SQL. It appears that 3CX has a limit on how long those queries can be. 
 
 ## Further reading
-If you need more info or you are a curoius person, check out 3CX official guide for databse CRM integrations: https://www.3cx.com/docs/sql-database-pbx-integration/.
-Also, there's an official guide from Halo but they seem to be using yet another method for 3CX: https://halopsa.com/guides/article/?kbid=1254
+- If you need more info or you are a curoius person, check out 3CX official guide for databse CRM integrations: https://www.3cx.com/docs/sql-database-pbx-integration/.
+- Also, there's an official guide from Halo but they seem to be using yet another method for 3CX: https://halopsa.com/guides/article/?kbid=1254
