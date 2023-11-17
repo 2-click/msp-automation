@@ -1,6 +1,6 @@
 # 3CX Serverside CRM integration for HaloPSA
 ## Why do I need that?
-HaloPSA does not offer a native, server-side integration for HaloPSA. They only offer a client-side integration where you can configure a URL in the 3CX client that opens up when you accept a call. When you configure a server-side integration, 3CX can lookup the numbers from incoming phone calls in HaloPSA and not only show your agents a name for the number, but also a button to open up the user in HaloPSA
+HaloPSA does not offer a native, server-side integration for HaloPSA. They only offer a client-side integration where you can configure a URL in the 3CX client that opens up when you accept a call. When you configure a server-side integration, 3CX can lookup the numbers from incoming phone calls in HaloPSA and not only show your agents a name for the number, but also a button to open up the user in HaloPSA.
 
 ## Settings required in HaloPSA
 No settings in HaloPSA are needed. You do need a readonly SQL account though and whitelist your 3CX IP. Contact Halo support for this.
