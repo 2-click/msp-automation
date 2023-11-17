@@ -1,4 +1,4 @@
-# 3CX Serverside CRM integration for HaloPSA
+# 3CX Serverside CRM integration for HaloPSA (SQL)
 ## Why do I need that?
 When you configure a server-side integration, 3CX can lookup the numbers from incoming phone calls in HaloPSA and not only show your agents a name for the number, but also a button to open up the user in HaloPSA.
 
