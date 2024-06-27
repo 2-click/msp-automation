@@ -82,7 +82,7 @@ SELECT
               FROM Actions 
               WHERE WhoAgentID = UNum 
               AND whe_ BETWEEN @startdate AND @enddate), 0)
-     , 2) AS [TORU-Score®]
+     , 2) AS [Score]
 FROM UNAME
 WHERE Unum NOT IN (1, 23, 17, 3, 6, 5, 20, 14, 27, 9) 
 AND Uisdisabled=0
