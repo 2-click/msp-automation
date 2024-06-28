@@ -1,5 +1,9 @@
-#Examle log line: 1225411107 Test Dude | YOURCOMPANY 29-12-2022 08:25:50 29-12-2022 08:28:54 adadmin RemoteControl {7a821bfd-c610-4c8d-8abb-c82fe4d83bc2}
-#Delimited by Tabs
+# This script uses the Connections_incoming.log file, which is updated once a session ends.
+# Note: This script will NOT detect sessions currently in progress.
+# Examle log line: 1225411107 Test Dude | YOURCOMPANY 29-12-2022 08:25:50 29-12-2022 08:28:54 adadmin RemoteControl {7a821bfd-c610-4c8d-8abb-c82fe4d83bc2}
+# Delimited by Tabs
+# Timestamps are UTC
+
 $lastconnectionsstr = @()
 $connections = @()
 foreach($line in Get-Content "C:\Program Files (x86)\TeamViewer\Connections_incoming.txt" -ErrorAction SilentlyContinue) {
