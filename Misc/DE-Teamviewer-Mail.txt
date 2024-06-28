@@ -1,0 +1,19 @@
+Wichtige Sicherheitsinformationen zur Fernwartungssoftware TeamViewer
+
+Sehr geehrte Damen und Herren,
+
+wir möchten Sie über einen kürzlich aufgetretenen Sicherheitsvorfall bei der Fernwartungssoftware TeamViewer informieren. Am Mittwoch, den 26. Juni 2024, entdeckte das Sicherheitsteam von TeamViewer eine Unregelmäßigkeit in der internen IT-Umgebung des Unternehmens. TeamViewer hat umgehend ein Reaktionsteam aktiviert und Untersuchungen zusammen mit weltweit anerkannten Cybersicherheitsexperten eingeleitet. Notwendige Abhilfemaßnahmen wurden bereits implementiert.
+
+Derzeit besteht kein Grund zur Sorge, da der Hersteller betont, dass nur die interne IT-Umgebung von TeamViewer betroffen sei.
+
+Dennoch möchten wir Sie zur erhöhten Aufmerksamkeit aufrufen. Bitte achten Sie auf ungewöhnliche Aktivitäten, insbesondere:
+
+- Wenn ungefragt eine Remote-Verbindung über TeamViewer aufgebaut wird
+- Wenn sich die Maus von selbst bewegt
+- Andere ungewöhnliche Aktivitäten auftreten
+
+
+Sollten Sie derartige Vorfälle bemerken, melden Sie diese bitte umgehend an unser Support-Team.
+
+Wir schätzen Ihre Wachsamkeit und Ihre Unterstützung in dieser Angelegenheit sehr.
+Für Rückfragen oder weitere Informationen stehen wir Ihnen gerne zur Verfügung.
