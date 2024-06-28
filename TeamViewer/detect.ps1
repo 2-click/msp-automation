@@ -7,6 +7,11 @@
 
 $lastconnectionsstr = @()
 $connections = @()
+if (-not (Test-Path -Path "C:\Program Files (x86)\TeamViewer\Connections_incoming.txt")) {
+  Write-Host "TeamViewer log could not be found"
+  return
+}
+
 foreach($line in Get-Content "C:\Program Files (x86)\TeamViewer\Connections_incoming.txt" -ErrorAction SilentlyContinue) {
    $fields = $line.Split("`t")
    

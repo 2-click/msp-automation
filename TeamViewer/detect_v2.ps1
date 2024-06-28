@@ -14,6 +14,11 @@ $friendly_identifier = "YOUR COMPANY"
 $connections = @()
 $failed_connections = @()
 
+if (-not (Test-Path -Path "C:\Program Files (x86)\TeamViewer\TeamViewer15_Logfile.log")) {
+    Write-Host "TeamViewer log could not be found"
+    return
+}
+
 foreach($line in Get-Content "C:\Program Files (x86)\TeamViewer\TeamViewer15_Logfile.log" -Encoding UTF8 -ErrorAction SilentlyContinue) {
 
 
