@@ -1,6 +1,7 @@
 # This script uses the TeamViewer15_Logfile.log file, which is updated in real-time.
 # It detects sessions that are currently in progress and connections that have already ended.
 # It will also detect both desktop sessions and file transfer sessions.
+# It will also detect login attempts (failed connections)
 # Examples
 # 2024/06/28 20:23:37.280  3160  3604 S0   CPersistentParticipantManager::AddParticipant: [1651063400,876631011] type=6 name=Joe Doe | Pro IT Services
 # 2024/06/28 22:49:14.140  3160  3608 S0   CPersistentParticipantManager::RemoveParticipant: [1651063400,2002352381]
@@ -9,24 +10,29 @@
 # Timestamps are local imezone
 
 # If the following text is found in the peer name, the connection will be considered friendly
-$friendly_identifier = "TORUTEC GmbH"
+$friendly_identifier = "YOUR COMPANY"
 $connections = @()
 $failed_connections = @()
+
 foreach($line in Get-Content "C:\Program Files (x86)\TeamViewer\TeamViewer15_Logfile.log" -Encoding UTF8 -ErrorAction SilentlyContinue) {
+
+
+    # Get the timestamp from the line, if it contains one
+    if ($line -match '^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}\.\d{3}') {
+        # Extract the timestamp part of the line
+        $timestamp = $matches[0]
+        # Convert the timestamp string to a DateTime object
+        $time_started = [datetime]::ParseExact($timestamp, 'yyyy/MM/dd HH:mm:ss.fff', $null)
+        $time_ago =  New-TimeSpan –Start $time_started –End $(Get-Date)
+    }
+
+
     # Check if the log line contains information on a new participant
     if ($line -match "CPersistentParticipantManager::AddParticipant:") {
         # A new participant joined
-
         # Split the log line into parts based on the first occurrence of "CPersistentParticipantManager::AddParticipant:"
         $main_parts = $line -split "CPersistentParticipantManager::AddParticipant:", 2
         
-        # Extract the initial parts of the log line (timestamp, process id, etc.)
-        $initial_parts = $main_parts[0] -split "\s+", 6
-        
-        # Extract variables from the initial parts
-        $timestamp = $initial_parts[0] + " " + $initial_parts[1]
-        $time_started = [Datetime]::ParseExact($timestamp, 'yyyy/MM/dd HH:mm:ss.fff', $null)
-        $time_ago =  New-TimeSpan –Start $time_started –End $(Get-Date)
         # Extract the participant info
         $participant_info = $main_parts[1].Trim()
         
@@ -52,9 +58,9 @@ foreach($line in Get-Content "C:\Program Files (x86)\TeamViewer\TeamViewer15_Log
                 }
                 $connections += $connection
             }
-
-        } 
+        }
     }
+    
     if ($line -match "AuthenticationBlocker::Allocate:") {
         if ($line -match 'attempt number (\d+)') {
             $attempt_count = $matches[1]
@@ -65,28 +71,59 @@ foreach($line in Get-Content "C:\Program Files (x86)\TeamViewer\TeamViewer15_Log
         $failed_connection = [PSCustomObject]@{
             time_started     = $time_started
             time_ago = $time_ago
-            dyngate_id = $name
+            peer_id = $dyngate_id
+            attempt_count = $attempt_count
         }
         $failed_connections += $failed_connection
     }
 }
-
-
-
-
-
-
 
 # Filter out friendly connections
 $foreign_connections = $connections | Where-Object -FilterScript {$_.peer_name -notlike "*$friendly_identifier*"}
 # Filter out old connections
 $foreign_connections = $foreign_connections | Where-Object -FilterScript {$_.time_ago.totalhours -lt 24}
 
-if ($foreign_connections.count -gt 0) {
-    Write-Host "foreign_connections_found"
+# Filter out old failed connections
+$failed_connections = $failed_connections | Where-Object -FilterScript {$_.time_ago.totalhours -lt 24}
+
+
+$healthy = $true
+$issues = ""
+$detail_messages = @()
+
+if ($null -ne $foreign_connections) {
+    $healthy = $false
+    $issues += "foreign_connections_found $([Environment]::NewLine)"
     foreach ($foreign_connection in $foreign_connections) {
-        Write-Host "$($foreign_connection.peer_name) ($($foreign_connection.peer_id)) started a connection on $($foreign_connection.time_started.ToString("dd.MM.yyyy HH:mm:ss"))"
+        $text = "TeamViewer ID $($foreign_connection.peer_id) ($($foreign_connection.peer_name)) started a session"
+        $detail_message = [PSCustomObject]@{
+            time_started     = $foreign_connection.time_started
+            text = $text
+        }
+        $detail_messages += $detail_message
     }
+}
+
+if ($null -ne $failed_connections) {
+    $healthy = $false
+    $issues += "failed_connections_found $([Environment]::NewLine)"
+    foreach ($failed_connection in $failed_connections) {
+        $text = "TeamViewer ID $($failed_connection.peer_id) attempted a connection (attempt #$($failed_connection.attempt_count))"
+        $detail_message = [PSCustomObject]@{
+            time_started     = $failed_connection.time_started
+            text = $text
+        }
+        $detail_messages += $detail_message
+    }
+}
+
+if ($healthy -eq $true) {
+    Write-Host "Healthy"
 } else {
-    Write-Host "no_foreign_connections_found"
+    Write-Host "Unhealthy"
+    Write-Host $issues
+    $detail_messages = $detail_messages | Sort-Object { [datetime]$_.time_started }
+    foreach ($detail_message in $detail_messages) {
+        Write-Host "$($detail_message.time_started.ToString("dd.MM.yyyy HH:mm:ss")): $($detail_message.text)"
+    }
 }
