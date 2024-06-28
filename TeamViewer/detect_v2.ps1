@@ -1,14 +1,17 @@
 # This script uses the TeamViewer15_Logfile.log file, which is updated in real-time.
 # It detects sessions that are currently in progress and connections that have already ended.
+# It will also detect both desktop sessions and file transfer sessions.
 # Examples
 # 2024/06/28 20:23:37.280  3160  3604 S0   CPersistentParticipantManager::AddParticipant: [1651063400,876631011] type=6 name=Joe Doe | Pro IT Services
 # 2024/06/28 22:49:14.140  3160  3608 S0   CPersistentParticipantManager::RemoveParticipant: [1651063400,2002352381]
+# 2024/06/28 22:01:34.365  3160  3616 S0   AuthenticationBlocker::Allocate: allocate ok for DyngateID 1349779002, attempt number 1
 # Delimited by one or more spaces
 # Timestamps are local imezone
 
 # If the following text is found in the peer name, the connection will be considered friendly
 $friendly_identifier = "TORUTEC GmbH"
 $connections = @()
+$failed_connections = @()
 foreach($line in Get-Content "C:\Program Files (x86)\TeamViewer\TeamViewer15_Logfile.log" -Encoding UTF8 -ErrorAction SilentlyContinue) {
     # Check if the log line contains information on a new participant
     if ($line -match "CPersistentParticipantManager::AddParticipant:") {
@@ -52,7 +55,27 @@ foreach($line in Get-Content "C:\Program Files (x86)\TeamViewer\TeamViewer15_Log
 
         } 
     }
+    if ($line -match "AuthenticationBlocker::Allocate:") {
+        if ($line -match 'attempt number (\d+)') {
+            $attempt_count = $matches[1]
+        }
+        if ($line -match 'DyngateID (\d+)') {
+            $dyngate_id = $matches[1]
+        }
+        $failed_connection = [PSCustomObject]@{
+            time_started     = $time_started
+            time_ago = $time_ago
+            dyngate_id = $name
+        }
+        $failed_connections += $failed_connection
+    }
 }
+
+
+
+
+
+
 
 # Filter out friendly connections
 $foreign_connections = $connections | Where-Object -FilterScript {$_.peer_name -notlike "*$friendly_identifier*"}

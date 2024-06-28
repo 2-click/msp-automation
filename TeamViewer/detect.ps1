@@ -1,4 +1,5 @@
 # This script uses the Connections_incoming.log file, which is updated once a session ends.
+# It will also detect both desktop sessions and file transfer sessions.
 # Note: This script will NOT detect sessions currently in progress.
 # Examle log line: 1225411107 Test Dude | YOURCOMPANY 29-12-2022 08:25:50 29-12-2022 08:28:54 adadmin RemoteControl {7a821bfd-c610-4c8d-8abb-c82fe4d83bc2}
 # Delimited by Tabs
