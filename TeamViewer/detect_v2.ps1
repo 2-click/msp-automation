@@ -79,7 +79,10 @@ foreach($line in Get-Content "C:\Program Files (x86)\TeamViewer\TeamViewer15_Log
             peer_id = $dyngate_id
             attempt_count = $attempt_count
         }
-        $failed_connections += $failed_connection
+        if ($attempt_count -gt 1) {
+            # Only add if it's not their first attempt
+            $failed_connections += $failed_connection
+        }
     }
 }
 
