@@ -136,7 +136,7 @@ if ($null -eq $s1_system_info) {
 # STEP 1
 # Create/assign tickets for threats that don't have a ticket yet
 Write-Host "Retrieving threats from SentinelOne to create/update tickets"
-$threats = Invoke-S1WebRequest -method "Get" -resource_uri "/web/api/v2.1/threats?incidentStatuses=unresolved&externalTicketExists=false"
+$threats = Invoke-S1WebRequest -method "Get" -resource_uri "/web/api/v2.1/threats?incidentStatuses=unresolved&externalTicketExists=false&limit=100"
 Write-host "Found $($threats.count) threats"
 foreach ($threat in $threats) {
     #Fetching additional Endpoint details for the threat
@@ -430,13 +430,13 @@ foreach ($existing_ticket in $existing_tickets) {
 # Loop through all SentinelOne Cases that are not resolved and have an external ticket ID. Check Ticket status for each of the threats and if a ticket is closed, reopen it. 
 Write-Host "Retrieving threats from SentinelOne to re-open tickets that have been closed without resolving the threat."
 $threats = $null
-$threats = Invoke-S1WebRequest -method "Get" -resource_uri "/web/api/v2.1/threats?incidentStatuses=unresolved,in_progress&externalTicketExists=true"
+$threats = Invoke-S1WebRequest -method "Get" -resource_uri "/web/api/v2.1/threats?incidentStatuses=unresolved,in_progress&externalTicketExists=true&limit=100"
 Write-Host "Found $($threats.Count) threats that are not resolved and have an external ticket ID set"
 
 foreach ($threat in $threats) {
     $ticket_id = $threat.threatInfo.externalTicketId
     $ticket = Get-HaloTicket -TicketID $ticket_id 
-    # Not too s ure if this is the best way to check if the ticket is closed. I would like to avoid using specefic status IDs because those are tricky
+   
     if ($null -ne $ticket.closure_time) {
         # Closed ticket has been found in Halo
         Write-Host "Ticket $ticket_id is closed, but a threat refering that ticket is not resolved yet, reopening the ticket..."
