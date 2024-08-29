@@ -119,7 +119,7 @@ function Set-S1ThreatExternalTicketId ($threat_id, $external_id) {
 
 # Connect to Halo
 try {
-    Connect-HaloAPI -URL $HaloURL -ClientId $HaloClientID -ClientSecret $HaloClientSecret -Scopes "all"
+    Connect-HaloAPI -URL $HaloURL -ClientId $HaloClientID -ClientSecret $HaloClientSecret -Scopes "all" -ErrorAction Stop
 }
 catch {
     Write-Error "Error connecting to the HaloPSA API"
@@ -177,6 +177,7 @@ foreach ($threat in $threats) {
     $date_time_string_german = $threat.threatInfo.createdAt.ToString($DATE_FORMAT_STRING)
 
     $report_string = "<b>New S1 threat from $($date_time_string_german)</b>" + [System.Environment]::NewLine
+    $report_string += "<b style=`"color: red;`">>>>DO NOT MERGE THIS TICKET<<</b>" + [System.Environment]::NewLine
     $report_string += "<a href=""$S1_BASE_URL/incidents/threats/$($threat.threatinfo.threatId)/overview"">Show in SentinelOne console</a>" + [System.Environment]::NewLine 
     $report_string += [System.Environment]::NewLine 
     $report_string += "-- FILE INFORMATION" + [System.Environment]::NewLine 
@@ -200,6 +201,9 @@ foreach ($threat in $threats) {
     $report_string += [System.Environment]::NewLine 
     $report_string += "-- HALO INFORMATION" + [System.Environment]::NewLine 
     $report_string += "Asset Inventory Number: $($halo_asset.inventory_number)" + [System.Environment]::NewLine 
+    $report_string += [System.Environment]::NewLine
+    $report_string += [System.Environment]::NewLine
+    $report_string += "<b style=`"color: red;`">>>>DO NOT MERGE THIS TICKET<<</b>" + [System.Environment]::NewLine
 
     $updated_existing_ticket = $false
     # Check if we have a matching Halo asset. Only then we can update existing tickets and link existing threat IDs to the ticket
