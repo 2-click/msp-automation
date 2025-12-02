@@ -259,7 +259,8 @@ foreach ($threat in $threats) {
                 }
                 $null = Set-HaloTicket -Ticket $halo_ticket
                 $updated_existing_ticket = $true
-                #Update S1 Threat external ticket ID
+                # Update S1 Threat external ticket ID
+                
                 Set-S1ThreatExternalTicketId -threat_id $threat.threatinfo.threatId -external_id $existing_ticket.id
                 break # Break loop as we have found a matching ticket
             }
@@ -326,7 +327,7 @@ foreach ($threat in $threats) {
         }
 
         $new_ticket = New-HaloTicket -Ticket $halo_ticket
-        if ($null -ne $new_ticket) {
+        if ($null -ne $new_ticket -and $new_ticket.id -gt 0) {
             Write-Host "Successfully created Ticket with ID: $($new_ticket.id)" -ForegroundColor Green
             Set-S1ThreatExternalTicketId -threat_id $threat.threatinfo.threatId -external_id $new_ticket.id
         }
@@ -431,6 +432,10 @@ foreach ($existing_ticket in $existing_tickets) {
 Write-Host "Retrieving threats from SentinelOne to re-open tickets that have been closed without resolving the threat."
 $threats = $null
 $threats = Invoke-S1WebRequest -method "Get" -resource_uri "/web/api/v2.1/threats?incidentStatuses=unresolved,in_progress&externalTicketExists=true&limit=100"
+
+# Sometimes SentinelOne returns threats that don'T have an external ticket ID set, so we filter them out here
+$threats = $threats | Where-Object -FilterScript { $null -ne $_.threatInfo.externalTicketId -and $_.threatInfo.externalTicketId.Length -gt 0 }
+
 Write-Host "Found $($threats.Count) threats that are not resolved and have an external ticket ID set"
 
 foreach ($threat in $threats) {
